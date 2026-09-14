@@ -1,0 +1,25 @@
+# Nexus Edge CRM
+# Deny direct web access to config files and the inc/ and storage/ directories.
+# Routing uses real .php paths, so mod_rewrite is not required.
+
+<FilesMatch "^(config\.php|config\.example\.php|\.gitignore|README\.md)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order deny,allow
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^(inc|storage)(/|$) - [F,L]
+</IfModule>
+
+Options -Indexes
+
+<IfModule mod_php.c>
+    php_value upload_max_filesize 20M
+    php_value post_max_size 22M
+</IfModule>

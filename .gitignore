@@ -1,0 +1,4 @@
+config.php
+storage/imports/*
+!storage/imports/.htaccess
+storage/install.lock
