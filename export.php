@@ -20,7 +20,7 @@ header('Cache-Control: no-store');
 header('X-Content-Type-Options: nosniff');
 
 $out = fopen('php://output', 'w');
-fwrite($out, "\xEF\xBB\xBF"); // BOM so Excel reads UTF-8 correctly
+fwrite($out, "\xEF\xBB\xBF"); // BOM so spreadsheet apps read UTF-8 correctly
 fputcsv($out, $columns, ',', '"', '');
 
 $st = q(LEAD_SELECT . " WHERE $whereSql ORDER BY l.id ASC", $params);

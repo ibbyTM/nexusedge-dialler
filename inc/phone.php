@@ -5,7 +5,7 @@ declare(strict_types=1);
  * Normalise a UK phone number to E.164 (+44...).
  * Returns null when the input does not resolve to +44 followed by 9 or 10 digits.
  *
- * Handles Excel artefacts (447123456789.0, 4.47123456789E+11), spaces, brackets,
+ * Handles spreadsheet export artefacts (447123456789.0, 4.47123456789E+11), spaces, brackets,
  * dashes, dots, and the common +44 (0)7... form.
  */
 function normalise_phone($raw): ?string
