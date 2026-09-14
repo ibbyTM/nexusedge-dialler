@@ -21,18 +21,11 @@
       cbField.classList.toggle('hidden', !needs);
       cbInput.required = needs;
       if (needs) {
-        if (!cbInput.value) {
-          var d = new Date(Date.now() + 24 * 3600 * 1000);
-          d.setSeconds(0, 0);
-          cbInput.value = toLocalValue(d);
-        }
         cbInput.focus();
+      } else {
+        cbInput.value = '';
+        if (document.activeElement === cbInput) { cbInput.blur(); }
       }
-    }
-
-    function toLocalValue(d) {
-      function p(n) { return (n < 10 ? '0' : '') + n; }
-      return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + 'T' + p(d.getHours()) + ':' + p(d.getMinutes());
     }
 
     buttons.forEach(function (b) {
@@ -57,6 +50,7 @@
       if (ev.ctrlKey || ev.metaKey || ev.altKey) { return; }
       var tag = (ev.target.tagName || '').toLowerCase();
       var typing = tag === 'textarea' || tag === 'input' || tag === 'select';
+      if (ev.key === 'Escape' && typing) { ev.target.blur(); return; }
       if (ev.key >= '1' && ev.key <= '8' && !typing) {
         var idx = parseInt(ev.key, 10) - 1;
         if (buttons[idx]) { ev.preventDefault(); select(buttons[idx].getAttribute('data-outcome')); }

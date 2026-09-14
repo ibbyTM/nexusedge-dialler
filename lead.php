@@ -40,7 +40,7 @@ if (is_post()) {
         'address'      => post_str('address', 255),
         'town'         => post_str('town', 120),
         'postcode'     => post_str('postcode', 20),
-        'notes'        => mb_substr(trim((string)post('notes')), 0, 20000),
+        'notes'        => mb_substr(trim((string)post('notes')), 0, 15000),
         'do_not_dial'  => post('do_not_dial') ? 1 : 0,
     ];
     $fields['phone_e164'] = normalise_phone($fields['phone_raw']);

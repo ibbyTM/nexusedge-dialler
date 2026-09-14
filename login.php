@@ -6,11 +6,17 @@ if (current_user()) {
     redirect('dial.php');
 }
 
+/** Only allow a relative path on this site: starts with a single slash, no scheme, no backslashes. */
+function safe_next(string $n): bool
+{
+    return $n !== '' && strlen($n) < 500 && preg_match('~^/(?![/\\\\])[A-Za-z0-9_\-./?=&%+]*$~', $n) === 1;
+}
+
 $error = '';
 $email = '';
 $next = (string)get('next', '');
 // Only allow relative, same-app redirects.
-if ($next === '' || $next[0] !== '/' || str_starts_with($next, '//') || str_contains($next, "\n")) {
+if (!safe_next($next)) {
     $next = '';
 }
 
@@ -19,7 +25,7 @@ if (is_post()) {
     $email = post_str('email', 190);
     $password = (string)post('password');
     $postedNext = (string)post('next', '');
-    if ($postedNext !== '' && $postedNext[0] === '/' && !str_starts_with($postedNext, '//')) {
+    if (safe_next($postedNext)) {
         $next = $postedNext;
     }
     if (login_rate_limited()) {

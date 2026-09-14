@@ -329,7 +329,7 @@ if (is_post()) {
         if (!$lockFh || !flock($lockFh, LOCK_EX | LOCK_NB)) {
             import_json(['error' => 'Another import request is still running. Reload to resume.']);
         }
-        set_time_limit(120);
+        @set_time_limit(120);
         ignore_user_abort(true);
         $chunk = max(50, (int)config('import_chunk_size', 500));
         $blocklist = (array)config('blocklist', []);

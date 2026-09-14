@@ -158,10 +158,10 @@ $webHref = $web !== '' && !preg_match('~^https?://~i', $web) ? 'http://' . $web 
       <?php endforeach; ?>
     </div>
     <label class="field">Notes<textarea name="note" id="note" placeholder="What happened on this call?"><?= e($posted['note']) ?></textarea></label>
-    <label class="field callback-field <?= in_array($posted['outcome'], OUTCOMES_NEED_CALLBACK, true) ? '' : 'hidden' ?>" id="callback-field">Callback date and time <span class="req">*</span><input type="datetime-local" name="callback_at" id="callback_at" value="<?= e($posted['callback_at']) ?>" step="300"></label>
+    <label class="field callback-field <?= in_array($posted['outcome'], OUTCOMES_NEED_CALLBACK, true) ? '' : 'hidden' ?>" id="callback-field">Callback date and time <span class="req">*</span><input type="datetime-local" name="callback_at" id="callback_at" value="<?= e($posted['callback_at']) ?>"></label>
     <div class="dial-save">
       <button class="btn btn-primary" type="submit">Save and next</button>
-      <span class="shortcut-hint">Keys 1–8 pick an outcome · Enter saves · Shift+Enter for a new line in notes</span>
+      <span class="shortcut-hint">Keys 1–8 pick an outcome · Enter saves · Shift+Enter for a new line in notes · Esc leaves a field</span>
     </div>
   </form>
 </div>
