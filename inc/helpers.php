@@ -175,3 +175,84 @@ require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/csrf.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/layout.php';
+require_once __DIR__ . '/phone.php';
+require_once __DIR__ . '/queue.php';
+
+// ---- Shared lead helpers -----------------------------------------------
+
+/** Active users for assignment dropdowns (setters first, then admins). */
+function assignable_users(): array
+{
+    return q_all("SELECT id, name, role FROM users WHERE active = 1 ORDER BY role = 'admin', name");
+}
+
+/**
+ * Build the WHERE clause for the leads list / export from GET filters.
+ * Always includes the role scope. Returns [sql, params, active_filters].
+ */
+function leads_filter(array $user, array $in): array
+{
+    $params = [];
+    $where = [lead_scope_sql($user, $params)];
+    $f = [
+        'status'   => (string)($in['status'] ?? ''),
+        'assigned' => (string)($in['assigned'] ?? ''),
+        'tier'     => (string)($in['tier'] ?? ''),
+        'batch'    => (string)($in['batch'] ?? ''),
+        'town'     => (string)($in['town'] ?? ''),
+        'dnd'      => (string)($in['dnd'] ?? ''),
+        'q'        => trim((string)($in['q'] ?? '')),
+    ];
+    if ($f['status'] !== '' && in_array($f['status'], DIAL_STATUSES, true)) {
+        $where[] = 'l.dial_status = ?';
+        $params[] = $f['status'];
+    } else {
+        $f['status'] = '';
+    }
+    if ($f['assigned'] === 'none') {
+        $where[] = 'l.assigned_to IS NULL';
+    } elseif ($f['assigned'] !== '' && ctype_digit($f['assigned'])) {
+        $where[] = 'l.assigned_to = ?';
+        $params[] = (int)$f['assigned'];
+    } else {
+        $f['assigned'] = '';
+    }
+    if ($f['tier'] !== '' && in_array($f['tier'], TIERS, true)) {
+        $where[] = 'l.tier = ?';
+        $params[] = $f['tier'];
+    } else {
+        $f['tier'] = '';
+    }
+    if ($f['batch'] !== '') {
+        $where[] = 'l.batch_name = ?';
+        $params[] = $f['batch'];
+    }
+    if ($f['town'] !== '') {
+        $where[] = 'l.town LIKE ?';
+        $params[] = $f['town'] . '%';
+    }
+    if ($f['dnd'] === '0' || $f['dnd'] === '1') {
+        $where[] = 'l.do_not_dial = ?';
+        $params[] = (int)$f['dnd'];
+    } else {
+        $f['dnd'] = '';
+    }
+    if ($f['q'] !== '') {
+        $like = '%' . $f['q'] . '%';
+        $digits = preg_replace('/\D+/', '', $f['q']);
+        $where[] = '(l.company_name LIKE ? OR l.contact_name LIKE ? OR l.email LIKE ? OR l.phone_raw LIKE ? OR l.phone_e164 LIKE ?)';
+        array_push($params, $like, $like, $like, $like, '%' . ($digits !== '' ? $digits : $f['q']) . '%');
+    }
+    return [implode(' AND ', $where), $params, $f];
+}
+
+/** Base SELECT for lead rows with the assignee name joined. */
+const LEAD_SELECT = 'SELECT l.*, u.name AS assigned_name FROM leads l LEFT JOIN users u ON u.id = l.assigned_to';
+
+/** Fetch one lead the current user is allowed to see, or null. */
+function find_lead_for_user(array $user, int $id): ?array
+{
+    $params = [$id];
+    $scope = lead_scope_sql($user, $params);
+    return q_one(LEAD_SELECT . " WHERE l.id = ? AND $scope", $params);
+}
