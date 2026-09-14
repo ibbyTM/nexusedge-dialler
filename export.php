@@ -2,6 +2,7 @@
 declare(strict_types=1);
 require_once __DIR__ . '/inc/helpers.php';
 $user = require_admin();
+session_write_close();
 
 [$whereSql, $params] = leads_filter($user, $_GET);
 
@@ -11,7 +12,7 @@ $columns = [
     'do_not_dial', 'dial_attempts', 'last_dial_at', 'callback_at', 'notes', 'custom_json', 'created_at', 'updated_at',
 ];
 // Free-text columns get a guard against spreadsheet formula injection.
-$textCols = ['company_name', 'contact_name', 'job_title', 'email', 'website', 'address', 'town', 'postcode', 'source', 'batch_name', 'assigned_name', 'notes', 'custom_json'];
+$textCols = ['company_name', 'contact_name', 'job_title', 'phone_raw', 'email', 'website', 'address', 'town', 'postcode', 'source', 'batch_name', 'assigned_name', 'notes', 'custom_json'];
 
 $filename = 'leads-' . date('Y-m-d-Hi') . '.csv';
 header('Content-Type: text/csv; charset=utf-8');

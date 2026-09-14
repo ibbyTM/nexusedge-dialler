@@ -97,6 +97,7 @@ $schema = [
     rows_duplicate INT UNSIGNED NOT NULL DEFAULT 0,
     rows_invalid INT UNSIGNED NOT NULL DEFAULT 0,
     rows_excluded INT UNSIGNED NOT NULL DEFAULT 0,
+    resume_offset INT UNSIGNED NOT NULL DEFAULT 0,
     created_at DATETIME NOT NULL,
     KEY ix_imports_user (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",

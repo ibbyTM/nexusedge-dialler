@@ -14,5 +14,5 @@
 
 <IfModule mod_rewrite.c>
     RewriteEngine On
-    RewriteRule ^(inc|storage)(/|$) - [F,L]
+    RewriteRule ^(inc|storage|\.git)(/|$) - [F,L]
 </IfModule>

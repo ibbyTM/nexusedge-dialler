@@ -51,7 +51,9 @@ if (is_post()) {
     if ($fields['phone_e164'] !== null) {
         $dupe = q_one('SELECT id FROM leads WHERE phone_e164 = ? AND id <> ?', [$fields['phone_e164'], $id]);
         if ($dupe) {
-            $errors[] = 'Another lead (#' . (int)$dupe['id'] . ') already has this phone number.';
+            $errors[] = $admin
+                ? 'Another lead (#' . (int)$dupe['id'] . ') already has this phone number.'
+                : 'This phone number is already in the CRM on another lead.';
         }
     }
     if ($admin) {

@@ -27,7 +27,8 @@ function db(): PDO
         header('Content-Type: text/plain; charset=utf-8');
         echo "Nexus Edge CRM could not connect to the database.\n\n";
         echo "Check the 'db' settings in config.php (host, name, user, pass).\n";
-        echo "Database error: " . $ex->getMessage() . "\n";
+        echo "The exact error has been written to the PHP error log.\n";
+        error_log('Nexus Edge CRM DB connection failed: ' . $ex->getMessage());
         exit;
     }
     // Keep MySQL NOW() aligned with the PHP timezone (handles BST/GMT).

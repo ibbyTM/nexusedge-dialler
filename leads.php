@@ -71,7 +71,9 @@ $rows = q_all(
 );
 
 $users = $admin ? assignable_users() : [];
-$batches = q_all("SELECT DISTINCT batch_name FROM leads WHERE batch_name <> '' ORDER BY batch_name");
+$bp = [];
+$bscope = lead_scope_sql($user, $bp);
+$batches = q_all("SELECT DISTINCT l.batch_name FROM leads l WHERE $bscope AND l.batch_name <> '' ORDER BY l.batch_name", $bp);
 $returnUrl = url_with([]);
 
 page_header('Leads');

@@ -27,7 +27,7 @@ Roles: `admin` sees everything. `setter` can only ever read or write leads assig
    - Under *Create New Database* enter a name such as `crm` and click *Create Database*. cPanel prefixes it, so the real name is something like `yourcpaneluser_crm`.
    - Under *MySQL Users > Add New User* create a user (for example `crmuser`) with a strong password. The real user name is `yourcpaneluser_crmuser`.
    - Under *Add User To Database* pick that user and that database, click *Add*, tick **ALL PRIVILEGES**, and click *Make Changes*.
-2. **Upload the app.** In cPanel open *File Manager*, go to `public_html`, create a folder called `crm`, and upload the contents of this folder into it (or upload a zip and extract it). You should end up with `public_html/crm/index.php`, `public_html/crm/inc/`, and so on. Make sure the hidden `.htaccess` files were uploaded too (File Manager > *Settings* > *Show Hidden Files*).
+2. **Upload the app.** In cPanel open *File Manager*, go to `public_html`, create a folder called `crm`, and upload the contents of this folder into it (or upload a zip and extract it). Do not upload the `.git` folder if you cloned the repository. You should end up with `public_html/crm/index.php`, `public_html/crm/inc/`, and so on. Make sure the hidden `.htaccess` files were uploaded too (File Manager > *Settings* > *Show Hidden Files*).
 3. **Configure.** In `public_html/crm/`, copy `config.example.php` to `config.php` and edit it:
    - `db.name`, `db.user`, `db.pass` – the values from step 1. `db.host` stays `localhost`.
    - `blocklist` – the chain agents to exclude on import. Edit freely.

@@ -14,6 +14,15 @@ require_once __DIR__ . '/inc/helpers.php';
 $cli = PHP_SAPI === 'cli';
 if (!$cli) {
     require_admin();
+    if (!is_post()) {
+        page_header('Seed demo data');
+        echo '<div class="card card-auth"><h2>Create demo data?</h2>';
+        echo '<p>This adds 2 test setters and 200 fake leads. It only runs while the leads table is empty.</p>';
+        echo '<form method="post">' . csrf_field() . '<button class="btn btn-primary" type="submit">Create demo data</button> <a class="btn btn-ghost" href="leads.php">Cancel</a></form></div>';
+        page_footer();
+        exit;
+    }
+    csrf_verify();
     header('Content-Type: text/plain; charset=utf-8');
 }
 $say = static function (string $s): void {

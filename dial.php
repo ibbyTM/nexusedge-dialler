@@ -52,7 +52,8 @@ if (is_post()) {
             $pdo->commit();
         } catch (Throwable $ex) {
             $pdo->rollBack();
-            $errors[] = 'Could not save: ' . $ex->getMessage();
+            error_log('Nexus Edge CRM dial save failed: ' . $ex->getMessage());
+            $errors[] = 'Could not save the outcome. Try again.';
         }
         if (!$errors) {
             flash('ok', 'Saved ' . $posted['outcome'] . ' for ' . ($lead['company_name'] ?: 'lead #' . $leadId) . '.');

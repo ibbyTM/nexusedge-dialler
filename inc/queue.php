@@ -25,7 +25,7 @@ function queue_where_sql(array &$params, int $userId): string
         AND (
             (l.callback_at IS NOT NULL AND l.callback_at <= ?)
             OR l.dial_status = 'New'
-            OR (l.dial_status = 'No-Answer' AND l.last_dial_at < ?)
+            OR (l.dial_status = 'No-Answer' AND (l.last_dial_at IS NULL OR l.last_dial_at < ?))
         )";
     $params[] = $userId;
     foreach (TERMINAL_STATUSES as $s) {
@@ -39,15 +39,20 @@ function queue_where_sql(array &$params, int $userId): string
 
 function queue_order_sql(array &$params): string
 {
-    $params[] = now();
+    $now = now();
+    $params[] = $now;
+    $params[] = $now;
+    // Group first, then each group's own key: due callbacks by callback time,
+    // New by created time, No-Answer by fewest attempts then oldest dial.
     return "CASE
             WHEN l.callback_at IS NOT NULL AND l.callback_at <= ? THEN 0
             WHEN l.dial_status = 'New' THEN 1
             ELSE 2 END ASC,
-        l.callback_at ASC,
-        l.created_at ASC,
+        CASE WHEN l.callback_at IS NOT NULL AND l.callback_at <= ? THEN l.callback_at END ASC,
+        CASE WHEN l.dial_status = 'New' THEN l.created_at END ASC,
         l.dial_attempts ASC,
         l.last_dial_at ASC,
+        l.created_at ASC,
         l.id ASC";
 }
 

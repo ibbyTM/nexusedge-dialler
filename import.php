@@ -91,7 +91,7 @@ function import_save(array $m): void
 /** Remove import files older than a day. */
 function import_cleanup(): void
 {
-    foreach (glob(IMPORT_DIR . '/*.{csv,json}', GLOB_BRACE) ?: [] as $f) {
+    foreach (glob(IMPORT_DIR . '/*.{csv,json,lock}', GLOB_BRACE) ?: [] as $f) {
         if (filemtime($f) < time() - 86400) {
             @unlink($f);
         }
@@ -149,7 +149,7 @@ function import_row_is_blank(array $row): bool
 function import_json(array $data): never
 {
     header('Content-Type: application/json; charset=utf-8');
-    echo json_encode($data);
+    echo json_encode($data, JSON_INVALID_UTF8_SUBSTITUTE | JSON_PARTIAL_OUTPUT_ON_ERROR);
     exit;
 }
 
@@ -179,7 +179,12 @@ $errors = [];
 // POST handlers
 // =====================================================================
 if (is_post()) {
-    csrf_verify();
+    // A body over post_max_size arrives with an empty $_POST; explain that instead of a token error.
+    if (empty($_POST) && (int)($_SERVER['CONTENT_LENGTH'] ?? 0) > 0) {
+        $errors[] = 'That upload is bigger than the server allows. The limit is 20MB, and your PHP upload_max_filesize / post_max_size settings must allow it.';
+    } else {
+        csrf_verify();
+    }
     $action = (string)post('action', '');
 
     // ---- Step 1: upload ----
@@ -197,7 +202,7 @@ if (is_post()) {
         } elseif (!is_uploaded_file($f['tmp_name'])) {
             $errors[] = 'Upload failed. Try again.';
         } elseif (!is_writable(IMPORT_DIR)) {
-            $errors[] = 'The storage/imports folder is not writable. Fix its permissions in cPanel File Manager.';
+            $errors[] = 'The storage/imports folder is not writable. Set it to 755 in your hosting file manager.';
         } else {
             $token = bin2hex(random_bytes(16));
             $dest = import_csv_path($token);
@@ -329,7 +334,18 @@ if (is_post()) {
         if (!$lockFh || !flock($lockFh, LOCK_EX | LOCK_NB)) {
             import_json(['error' => 'Another import request is still running. Reload to resume.']);
         }
+        session_write_close();
         @set_time_limit(120);
+        // The imports row is the source of truth for resume: it is updated in the same
+        // transaction as the inserts, so a request killed after commit cannot replay rows.
+        $dbRow = q_one('SELECT resume_offset, rows_imported, rows_duplicate, rows_invalid, rows_excluded FROM imports WHERE id = ?', [(int)$meta['import_id']]);
+        if ($dbRow && (int)$dbRow['resume_offset'] > (int)$meta['offset']) {
+            $meta['offset'] = (int)$dbRow['resume_offset'];
+            $meta['imported'] = (int)$dbRow['rows_imported'];
+            $meta['duplicate'] = (int)$dbRow['rows_duplicate'];
+            $meta['invalid'] = (int)$dbRow['rows_invalid'];
+            $meta['excluded'] = (int)$dbRow['rows_excluded'];
+        }
         ignore_user_abort(true);
         $chunk = max(50, (int)config('import_chunk_size', 500));
         $blocklist = (array)config('blocklist', []);
@@ -444,9 +460,10 @@ if (is_post()) {
             if ($eof) {
                 $meta['step'] = 'done';
                 $meta['finished_at'] = now();
-                q('UPDATE imports SET rows_total = ?, rows_imported = ?, rows_duplicate = ?, rows_invalid = ?, rows_excluded = ? WHERE id = ?',
-                    [(int)$meta['processed'], (int)$meta['imported'], (int)$meta['duplicate'], (int)$meta['invalid'], (int)$meta['excluded'], (int)$meta['import_id']]);
+                $meta['rows_total'] = $meta['processed'];
             }
+            q('UPDATE imports SET rows_total = ?, rows_imported = ?, rows_duplicate = ?, rows_invalid = ?, rows_excluded = ?, resume_offset = ? WHERE id = ?',
+                [(int)$meta['rows_total'], (int)$meta['imported'], (int)$meta['duplicate'], (int)$meta['invalid'], (int)$meta['excluded'], (int)$meta['offset'], (int)$meta['import_id']]);
             $pdo->commit();
         } catch (Throwable $ex) {
             $pdo->rollBack();

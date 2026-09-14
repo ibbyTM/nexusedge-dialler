@@ -11,6 +11,8 @@ declare(strict_types=1);
 function normalise_phone($raw): ?string
 {
     $s = trim((string)$raw);
+    // Some exports wrap the number as ="..." or quote it.
+    $s = trim($s, "=\"' ");
     if ($s === '') {
         return null;
     }
@@ -21,11 +23,6 @@ function normalise_phone($raw): ?string
     }
     // Float-looking numbers: 447123456789.0 -> 447123456789
     $s = preg_replace('/\.0+$/', '', $s) ?? $s;
-    // Some exports quote the number or wrap it in ="...".
-    $s = trim($s, "=\"' ");
-    if ($s === '') {
-        return null;
-    }
     $hasPlus = $s[0] === '+';
     $digits = preg_replace('/\D+/', '', $s) ?? '';
     if ($digits === '') {
@@ -44,6 +41,9 @@ function normalise_phone($raw): ?string
         $national = substr($digits, 2);
     } elseif (str_starts_with($digits, '0')) {
         $national = substr($digits, 1);
+    } elseif (preg_match('/^[1-9]\d{9}$/', $digits)) {
+        // Spreadsheets drop the leading 0 from numeric cells: 7700900123 -> 07700900123
+        $national = $digits;
     } else {
         return null;
     }
