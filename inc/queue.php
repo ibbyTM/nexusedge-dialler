@@ -10,7 +10,7 @@ declare(strict_types=1);
  *  3. then New, oldest created first
  *  4. then No-Answer where last_dial_at is more than 24h ago, fewest attempts first
  *  5. never Demo Booked, Cancelled, DQ or Invalid
- *  6. skip anything dialled in the last 4 hours
+ *  6. skip anything dialled in the last 4 hours, except a callback that is due
  */
 function queue_where_sql(array &$params, int $userId): string
 {
@@ -19,20 +19,25 @@ function queue_where_sql(array &$params, int $userId): string
     $dayAgo = date('Y-m-d H:i:s', time() - 24 * 3600);
     $terminal = implode(',', array_fill(0, count(TERMINAL_STATUSES), '?'));
 
+    // A due callback is served regardless of when the lead was last dialled.
     $sql = "l.assigned_to = ? AND l.do_not_dial = 0
         AND l.dial_status NOT IN ($terminal)
-        AND (l.last_dial_at IS NULL OR l.last_dial_at < ?)
         AND (
             (l.callback_at IS NOT NULL AND l.callback_at <= ?)
-            OR l.dial_status = 'New'
-            OR (l.dial_status = 'No-Answer' AND (l.last_dial_at IS NULL OR l.last_dial_at < ?))
+            OR (
+                (l.last_dial_at IS NULL OR l.last_dial_at < ?)
+                AND (
+                    l.dial_status = 'New'
+                    OR (l.dial_status = 'No-Answer' AND (l.last_dial_at IS NULL OR l.last_dial_at < ?))
+                )
+            )
         )";
     $params[] = $userId;
     foreach (TERMINAL_STATUSES as $s) {
         $params[] = $s;
     }
-    $params[] = $fourHoursAgo;
     $params[] = $now;
+    $params[] = $fourHoursAgo;
     $params[] = $dayAgo;
     return $sql;
 }

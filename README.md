@@ -76,7 +76,7 @@ A setter's queue serves, in this order:
 3. `New` leads, oldest created first.
 4. `No-Answer` leads last dialled more than 24 hours ago, fewest attempts first.
 
-`Demo Booked`, `Cancelled`, `DQ` and `Invalid` are never served, and any lead dialled in the last 4 hours is skipped. That 4-hour rule also applies to due callbacks, so a callback set for less than 4 hours after the call will not appear in the queue until then; the *Callbacks* page always shows it and its "Dial now" button works regardless.
+`Demo Booked`, `Cancelled`, `DQ` and `Invalid` are never served, and any lead dialled in the last 4 hours is skipped. A callback that is due is exempt from the 4-hour rule, so a callback set for 30 minutes after the call will appear in the queue on time.
 
 ## Security notes
 
